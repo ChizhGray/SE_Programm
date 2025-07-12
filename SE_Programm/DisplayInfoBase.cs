@@ -75,6 +75,7 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Ingot/Silver", "Серебро"},
             {"MyObjectBuilder_Ingot/Gold", "Золото"},
             {"MyObjectBuilder_Ingot/Uranium", "Уран"},
+            {"MyObjectBuilder_Ingot/Platinum", "Платина"},
 
             {"MyObjectBuilder_Ore/Ice", "Лёд"},
             {"MyObjectBuilder_Ore/Stone", "Камень"},
@@ -85,6 +86,7 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Ore/Magnesium", "Магниевая руда"},
             {"MyObjectBuilder_Ore/Silver", "Серебряная руда"},
             {"MyObjectBuilder_Ore/Gold", "Золотая руда"},
+            {"MyObjectBuilder_Ore/Platinum", "Платиновая руда"},
 
             {"MyObjectBuilder_Component/SteelPlate", "Стальная пластина"},
             {"MyObjectBuilder_Component/Construction", "Строительные компоненты"},
