@@ -392,7 +392,8 @@ namespace DisplayInfoBase
                 String name = tryTranslate(key);
                 sb.AppendLine($"{name}: {source[key]}");
             }
-            return sb.ToString();
+            var result = sb.ToString() != "" ? sb.ToString(): "-\n";
+            return result;
         }
 
         String GetUnknownItems(Dictionary<String, int> source, List<String> knownTypes) {
