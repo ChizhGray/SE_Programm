@@ -1,4 +1,5 @@
 ﻿using Sandbox.Game;
+using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.Gui;
 using Sandbox.ModAPI.Ingame;
@@ -15,6 +16,7 @@ using VRage.Game.Components;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ObjectBuilders.Definitions;
+using VRage.Library.Collections;
 using VRage.ModAPI;
 using VRageMath;
 using static VRage.Game.MyObjectBuilder_SessionComponentMission;
@@ -28,17 +30,21 @@ namespace DisplayInfoBase
 
 
         /// Start of the script
-        const String ingotType = "MyObjectBuilder_Ingot/";
-        const String componentType = "MyObjectBuilder_Component/";
-        const String oreType = "MyObjectBuilder_Ore/";
-        const String unknownType = "Unknown";
+        const string ingotType = "MyObjectBuilder_Ingot/";
+        const string componentType = "MyObjectBuilder_Component/";
+        const string oreType = "MyObjectBuilder_Ore/";
+        const string unknownType = "Unknown";
 
-        const String hydrogenCapacity = "hydrogenCapacity";
-        const String hydrogenCurrent = "hydrogenCurrent";
-        const String hydrogenPercent  = "hydrogenPercent";
-        const String oxygenCapacity = "oxygenCapacity";
-        const String oxygenCurrent = "oxygenCurrent";
-        const String oxygenPercent = "oxygenPercent";
+        const string generatorManagerKeyWord = "generatormanager(";
+        const string textAlignKeyWord = "-align(";
+        const string fontSizeKeyWord = "-fontsize(";
+
+        const string hydrogenCapacity = "hydrogenCapacity";
+        const string hydrogenCurrent = "hydrogenCurrent";
+        const string hydrogenPercent  = "hydrogenPercent";
+        const string oxygenCapacity = "oxygenCapacity";
+        const string oxygenCurrent = "oxygenCurrent";
+        const string oxygenPercent = "oxygenPercent";
 
         Dictionary<String, String> dictionary = new Dictionary<String, String> {
             {"MyObjectBuilder_Ingot/Stone", "Гравий"},
@@ -97,12 +103,13 @@ namespace DisplayInfoBase
 
         List<IMyShipController> controllers = new List<IMyShipController>();
         IMyProgrammableBlock program;
+        System.Globalization.CultureInfo provider = System.Globalization.CultureInfo.InvariantCulture;
 
         double cargoMass = 0;
         double cargoMassMax = 0;
 
         double generatorManagerBattareyPercent = 25;
-        int generatorManagerIceMinCount = 1000;
+        int generatorManagerIceMinCount = 2500;
         double generatorManagerGasPercent = 25;
 
         int counter = 1;
@@ -134,31 +141,29 @@ namespace DisplayInfoBase
             float shipCargoMass = shipMassPair.Value - shipMassBase;
             var iceCount = getItemCount(allCargo, "MyObjectBuilder_Ore/Ice");
             KeyValuePair<String, double> batteriesInfo = getBatteriesInfo();
-            if (program.CustomData.ToLower().Contains("generatormanager")) {
+            if (program.CustomData.ToLower().Contains(generatorManagerKeyWord)) {
                 manageGenegators(
                     batteriesInfo.Value, 
-                    generatorManagerBattareyPercent, 
                     iceCount, 
-                    generatorManagerIceMinCount, 
-                    hydrogenPercentValue, 
-                    generatorManagerGasPercent
+                    hydrogenPercentValue
                 );
             }
             foreach (IMyTextPanel myTextPanel in textPanels) {
                 string customData = myTextPanel.CustomData.ToLower();
+                applyTextPannelSettings(myTextPanel);
                 StringBuilder output = new StringBuilder();
                 List<string> tags = customData.Split('\n').Select(t => t.Trim()).ToList();
                 foreach (string tag in tags) {
                     if (tag == "space")
                         output.AppendLine("");
                     else if (tag == "ignots" && ingots != "")
-                        output.AppendLine($"-= Слитки =-\n{ingots}");
+                        output.AppendLine($"-= Слитки =-{ingots}");
                     else if (tag == "ores" && ore != "")
-                        output.AppendLine($"-= Руда =-\n{ore}");
+                        output.AppendLine($"-= Руда =-{ore}");
                     else if (tag == "components" && components != "")
-                        output.AppendLine($"-= Компоненты =-\n{components}");
+                        output.AppendLine($"-= Компоненты =-{components}");
                     else if (tag == "unknown" && unknown != "")
-                        output.AppendLine($"-=  Не распознано =-\n{unknown}");
+                        output.AppendLine($"-=  Не распознано =-{unknown}");
                     else if (tag == "batteries")
                         output.AppendLine(batteriesInfo.Key);
                     else if (tag == "turbines")
@@ -223,7 +228,6 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(textPanels, textPanel => textPanel.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipController>(controllers, i => i.CubeGrid == currentGrid);
-            applyTextPannelsSettings();
             applyProgrammBlockSettings();
         }
 
@@ -264,36 +268,34 @@ namespace DisplayInfoBase
                 "Успешная инициализация!" +
                 $"\nнайдено {textPanels.Count} текстовых панели!";
             Echo(successInit);
-            writeOnPBScreen(successInit + "\n\nДоступны команды:\ngeneratorManager");
+            writeOnPBScreen(successInit + "\n\nДоступны команды:\ngeneratorManager(Bat,Ice,H2)");
         }
 
-        void applyTextPannelsSettings() {
-            foreach (IMyTextPanel myTextPanel in textPanels) {
-                myTextPanel.ContentType = ContentType.TEXT_AND_IMAGE;
-                myTextPanel.FontColor = Color.DarkGreen;
-                string customData = myTextPanel.CustomData.ToLower();
-                int fontSizeStart = customData.IndexOf("-fontsize(");
-                if (fontSizeStart >= 0) {
-                    int start = fontSizeStart + 10;
-                    int end = customData.IndexOf(")", start);
-                    if (end > start) {
-                        string sizeValue = customData.Substring(start, end - start);
-                        float fontSize = ParseFloat(sizeValue);
-                        if (fontSize > 0) {
-                            myTextPanel.FontSize = MathHelper.Clamp(fontSize, 0.1f, 10f);
-                        }
+        void applyTextPannelSettings(IMyTextPanel myTextPanel) {
+            myTextPanel.ContentType = ContentType.TEXT_AND_IMAGE;
+            myTextPanel.FontColor = Color.DarkGreen;
+            string customData = myTextPanel.CustomData.ToLower();
+            int fontSizeStart = customData.IndexOf(fontSizeKeyWord);
+            if (fontSizeStart >= 0) {
+                int start = fontSizeStart + fontSizeKeyWord.Length;
+                int end = customData.IndexOf(")", start);
+                if (end > start) {
+                    string sizeValue = customData.Substring(start, end - start);
+                    float fontSize = parseFloat(sizeValue);
+                    if (fontSize > 0) {
+                        myTextPanel.FontSize = MathHelper.Clamp(fontSize, 0.1f, 10f);
                     }
                 }
-                int alignStart = customData.IndexOf("-align(");
-                if (alignStart >= 0) {
-                    int start = alignStart + 7;
-                    int end = customData.IndexOf(")", start);
-                    if (end > start) {
-                        string alignValue = customData.Substring(start, end - start);
-                        if (alignValue == "c") myTextPanel.Alignment = TextAlignment.CENTER;
-                        else if (alignValue == "r") myTextPanel.Alignment = TextAlignment.RIGHT;
-                        else if (alignValue == "l") myTextPanel.Alignment = TextAlignment.LEFT;
-                    }
+            }
+            int alignStart = customData.IndexOf(textAlignKeyWord);
+            if (alignStart >= 0) {
+                int start = alignStart + textAlignKeyWord.Length;
+                int end = customData.IndexOf(")", start);
+                if (end > start) {
+                    string alignValue = customData.Substring(start, end - start);
+                    if (alignValue == "c") myTextPanel.Alignment = TextAlignment.CENTER;
+                    else if (alignValue == "r") myTextPanel.Alignment = TextAlignment.RIGHT;
+                    else if (alignValue == "l") myTextPanel.Alignment = TextAlignment.LEFT;
                 }
             }
         }
@@ -427,9 +429,9 @@ namespace DisplayInfoBase
             keyList.Sort();
             foreach (String key in keyList) {
                 String name = tryTranslate(key);
-                sb.AppendLine($"{name}: {source[key]}");
+                sb.Append($"\n{name}: {source[key]}");
             }
-            var result = sb.ToString() != "" ? sb.ToString(): "нет в наличии";
+            var result = sb.ToString() != "" ? sb.ToString(): " - Нет в наличии";
             return result;
         }
 
@@ -441,9 +443,9 @@ namespace DisplayInfoBase
                 .ToList();
             foreach (String key in unknownKeys) {
                 String name = tryTranslate(key);
-                sb.AppendLine($"{name}: {source[key]}");
+                sb.Append($"\n{name}: {source[key]}");
             }
-            var result = sb.ToString() != "" ? sb.ToString() : "нет в наличии";
+            var result = sb.ToString() != "" ? sb.ToString() : " - Нет в наличии";
             return result;
         }
 
@@ -468,7 +470,7 @@ namespace DisplayInfoBase
             } 
             string status = isCharging ? "заряжаются" : isDischarging ? "разряжаются" : "в режиме ожидания";
             double percent = Math.Round(stored / max * 100, 1);
-            return new KeyValuePair<String, double>($"Баттареи {status}: {percent}%", percent);
+            return new KeyValuePair<String, double>($"Батареи ({batteries.Count}) {status}: {percent}%", percent);
         }
 
         String getTurbinesInfo() {
@@ -479,7 +481,7 @@ namespace DisplayInfoBase
                 totalOutput += turbine.CurrentOutput;
                 if (turbine.IsWorking) workingTurbines++;
             }
-            return $"Турбины: {workingTurbines}/{turbines.Count} работают ({Math.Round(totalOutput, 2)} МВт)";
+            return $"Турбины({workingTurbines}/{turbines.Count}) работают:  {Math.Round(totalOutput, 2)} МВт";
         }
 
         String getGeneratorInfo() {
@@ -493,7 +495,7 @@ namespace DisplayInfoBase
                 if (gen.IsWorking) workingGenerators++;
             }
             if (workingGenerators == 0) return "Генераторы не работают";
-            return $"Генераторы: {workingGenerators}/{generators.Count} работают ({Math.Round(currentOutput, 2)} МВт)";
+            return $"Генераторы({workingGenerators}/{generators.Count}) работают: {Math.Round(currentOutput, 2)} МВт";
         }
 
         String getConnectorInfo() {
@@ -503,9 +505,9 @@ namespace DisplayInfoBase
                 if (connector.Status == MyShipConnectorStatus.Connected) { 
                     IMyShipConnector otherConnector = connector.OtherConnector;
                     IMyCubeGrid connectedGrid = otherConnector.CubeGrid;
-                    sb.AppendLine($"'{connector.CustomName}' -> {connectedGrid.DisplayName}");
+                    sb.AppendLine($"'{connector.CustomName}' -V-> {connectedGrid.DisplayName}");
                 } else {
-                    sb.AppendLine($"'{connector.CustomName}' свободен");
+                    sb.AppendLine($"'{connector.CustomName}' -X-> Нет соединения");
                 }
             }
             return sb.ToString();
@@ -520,36 +522,70 @@ namespace DisplayInfoBase
             return result;
         }
 
-        void manageGenegators(double batteriesPercent, double enableOn, int iceCount, int iceMinValue, double gasPercent, double gasMinValue) {
+        void manageGenegators(double batteriesPercent, int iceCount, double gasPercent) {
             if (generators.Count == 0) {
                 writeOnPBScreen("Генераторы не найдены");
                 return;
             }
-            Boolean enable = batteriesPercent <= enableOn && iceCount > iceMinValue && gasPercent > gasMinValue;
-            string status = enable ? "зарядка" : "простой";
+
+            int index = program.CustomData.ToLower().IndexOf(generatorManagerKeyWord);
+            if (index >= 0) {
+                int start = index + generatorManagerKeyWord.Length;
+                int end = program.CustomData.IndexOf(")", start);
+                if (end > start) {
+                    String payloadRaw = program.CustomData.Substring(start, end - start);
+                    if (!payloadRaw.Contains(',')) {
+                        writeOnPBScreen("GeneratorManager\nне верный формат аргументов!\ngeneratormanager(Bat,Ice,H2)");
+                        return;
+                    }
+                    var payloadItems = payloadRaw.Split(',');
+                    if (payloadItems.Length == 3) {
+                        generatorManagerBattareyPercent = parseDouble(payloadItems[0], generatorManagerBattareyPercent);
+                        generatorManagerIceMinCount = parseInt(payloadItems[1], generatorManagerIceMinCount);
+                        generatorManagerGasPercent = parseDouble(payloadItems[2], generatorManagerGasPercent);
+                    } else {
+                        writeOnPBScreen("GeneratorManager\nне достаточно аргументов!\ngeneratormanager(Bat,Ice,H2)");
+                        return;
+                    }
+                }
+            }
+            Boolean enable = 
+                batteriesPercent <= generatorManagerBattareyPercent 
+                && (iceCount > generatorManagerIceMinCount || gasPercent > generatorManagerGasPercent);
+            string status = enable ? "Активно" : "Простой";
             writeOnPBScreen(
                     $"GeneratorManager: {status}" +
                     $"\n{getAnimate()}" +
                     "\n\nУсловия для работы:" +
                     $"\nЗарядка батарей <= {generatorManagerBattareyPercent}%" +
-                    $"\nЛёд > {generatorManagerIceMinCount}" +
-                    $"\nВодород > {generatorManagerGasPercent}%"
+                    $"\nи Лёд > {generatorManagerIceMinCount}" +
+                    $"\nили Водород > {generatorManagerGasPercent}%"
                 );
             foreach (var gen in generators) {
                 gen.Enabled = enable;
             }
         }
-
-        float ParseFloat(string value) {
+        
+        float parseFloat(string value) {
             float result = 0;
-            try {
-                result = float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
-            } catch {
-                Echo("ParseFloat fail");
-            }
+            try { result = float.Parse(value, provider); } 
+            catch(Exception e) { writeOnPBScreen(e.Message); }
+            return result;
+        }
+
+        double parseDouble(string value, double defaultValue) {
+            double result = defaultValue;
+            try { result = double.Parse(value, provider); } 
+            catch(Exception e) { writeOnPBScreen(e.Message); }
+            return result;
+        }
+
+        int parseInt(string value, int defaultValue) {
+            int result = defaultValue;
+            try { result = int.Parse(value, provider); } 
+            catch (Exception e) { writeOnPBScreen(e.Message); }
             return result;
         }
         /// End of the script
-
     }
 }
