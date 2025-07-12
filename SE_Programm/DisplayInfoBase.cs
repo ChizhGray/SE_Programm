@@ -30,7 +30,7 @@ namespace DisplayInfoBase
 
 
         /// Start of the script
-        const string pbGeneratorTemplate = "\ngeneratorManager(Bat,Ice,H2)";
+        const string pbGeneratorTemplate = "generatorManager(Bat,Ice,H2)";
         const string ingotType = "MyObjectBuilder_Ingot/";
         const string componentType = "MyObjectBuilder_Component/";
         const string oreType = "MyObjectBuilder_Ore/";
@@ -63,7 +63,7 @@ namespace DisplayInfoBase
         const string userKeyReactors = "reactors";
 
 
-        const string textPannelsComands = "Введите доступные значения: " +
+        string textPannelsComands = "Введите доступные значения: " +
                         "\n\n-= Инвентарь =-" +
                         $"\n{userKeyIgnots} | {userKeyOres} | {userKeyComponents}" +
                         $"\n{userKeyPhysicals} | {userKeyAmmos} | {userKeyGuns}" +
@@ -174,12 +174,10 @@ namespace DisplayInfoBase
             String ingots = stringItemMap[ingotType];
             String components = stringItemMap[componentType];
             String ore = stringItemMap[oreType];
-            //
             string physycal = stringItemMap[physycalType];
             string guns = stringItemMap[gunType];
             string ammo = stringItemMap[ammoType];
             string oxygenBottle = stringItemMap[oxygenType];
-            //
             String unknown = stringItemMap[unknownType];
             double hydrogenPercentValue = gasInfo[hydrogenPercent];
             double hydrogenCurrentValue = gasInfo[hydrogenCurrent];
@@ -203,7 +201,7 @@ namespace DisplayInfoBase
                     hydrogenPercentValue
                 );
             } else {
-                writeOnPBScreen($"\n\nДоступны команды:{pbGeneratorTemplate}");
+                writeOnPBScreen($"\n\nДоступны команды:\n{pbGeneratorTemplate}");
             }
             foreach (IMyTextPanel myTextPanel in textPanels) {
                 string customData = myTextPanel.CustomData.ToLower();
@@ -305,10 +303,10 @@ namespace DisplayInfoBase
             screen.BackgroundColor = Color.Black;
             screen.Alignment = TextAlignment.CENTER;
             string successInit = 
-                $"Успешная инициализация! (retrys:{3-retryAttempt})" +
-                $"\nнайдено {textPanels.Count} текстовых панели!";
+                $"Успешная инициализация! (retry:{3-retryAttempt})" +
+                $"\nНайдено {textPanels.Count} текстовых панели!";
             Echo(successInit);
-            writeOnPBScreen(successInit + $"\n\nДоступны команды:{pbGeneratorTemplate}");
+            writeOnPBScreen(successInit + $"\n\nДоступны команды:\n{pbGeneratorTemplate}");
         }
 
         void applyTextPannelSettings(IMyTextPanel myTextPanel) {
@@ -468,12 +466,10 @@ namespace DisplayInfoBase
             result[ingotType] = GetFormattedItems(itemMap, ingotType);
             result[componentType] = GetFormattedItems(itemMap, componentType);
             result[oreType] = GetFormattedItems(itemMap, oreType);
-            //
             result[physycalType] = GetFormattedItems(itemMap, physycalType);
             result[ammoType] = GetFormattedItems(itemMap, ammoType);
             result[gunType] = GetFormattedItems(itemMap, gunType);
             result[oxygenType] = GetFormattedItems(itemMap, oxygenType);
-            //
             result[unknownType] = GetUnknownItems(
                 itemMap, 
                 new List<String> { 
@@ -613,7 +609,7 @@ namespace DisplayInfoBase
 
         void manageGenegators(double batteriesPercent, int iceCount, double gasPercent) {
             if (generators.Count == 0) {
-                writeOnPBScreen("Генераторы не найдены");
+                writeOnPBScreen("GeneratorManager\nГенераторы не найдены");
                 return;
             }
 
@@ -624,7 +620,7 @@ namespace DisplayInfoBase
                 if (end > start) {
                     String payloadRaw = program.CustomData.Substring(start, end - start);
                     if (!payloadRaw.Contains(',')) {
-                        writeOnPBScreen($"GeneratorManager\nне верный формат аргументов!{pbGeneratorTemplate}");
+                        writeOnPBScreen($"GeneratorManager\nне верный формат аргументов!\n{pbGeneratorTemplate}");
                         return;
                     }
                     var payloadItems = payloadRaw.Split(',');
@@ -633,7 +629,7 @@ namespace DisplayInfoBase
                         generatorManagerIceMinCount = parseInt(payloadItems[1], generatorManagerIceMinCount);
                         generatorManagerGasPercent = parseDouble(payloadItems[2], generatorManagerGasPercent);
                     } else {
-                        writeOnPBScreen($"GeneratorManager\nне достаточно аргументов!{pbGeneratorTemplate}");
+                        writeOnPBScreen($"GeneratorManager\nне достаточно аргументов!\n{pbGeneratorTemplate}");
                         return;
                     }
                 }
@@ -645,11 +641,12 @@ namespace DisplayInfoBase
             string batStatus = mustBeCharged ? "[v] Нужда в зарядке" : "[x] Батареи заряжены";
             string iceStatus = iceEnough ? "[v] Льда достаточно" : "[x] Льда недостаточно";
             string gasStatus = gasEnough ? "[v] Водорода достаточно" : "[x] Водорода недостаточно";
-            string status = enable 
-                ? "[v] Генераторы работают" 
-                : $"{batStatus} : {batteriesPercent}/{generatorManagerBattareyPercent}%" +
-                $"\n{iceStatus} : {iceCount}/{generatorManagerIceMinCount}" +
-                $"\n{gasStatus} : {gasPercent}/{generatorManagerGasPercent}";
+            string generatorStatus = enable ? "Генераторы работают" : "Генераторы выключены";
+            string status = 
+                $"{generatorStatus}" +
+                $"\n\n{batStatus} : {batteriesPercent}/{generatorManagerBattareyPercent}%" +
+                $"\n{iceStatus} : {iceCount/1000}к/{generatorManagerIceMinCount/1000}к" +
+                $"\n{gasStatus} : {gasPercent}/{generatorManagerGasPercent}%";
             writeOnPBScreen(
                     "GeneratorManager" +
                     $"\n\n{status}"
