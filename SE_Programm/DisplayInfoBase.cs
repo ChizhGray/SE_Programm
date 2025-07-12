@@ -85,6 +85,7 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Ore/Magnesium", "Магниевая руда"},
             {"MyObjectBuilder_Ore/Silver", "Серебряная руда"},
             {"MyObjectBuilder_Ore/Gold", "Золотая руда"},
+            {"MyObjectBuilder_Ore/Uranium", "Урановая руда"},
             {"MyObjectBuilder_Ore/Platinum", "Платиновая руда"},
 
             {"MyObjectBuilder_Component/SteelPlate", "Стальная пластина"},
@@ -580,14 +581,14 @@ namespace DisplayInfoBase
             }
             Boolean enable = 
                 batteriesPercent <= generatorManagerBattareyPercent 
-                && (iceCount > generatorManagerIceMinCount || gasPercent > generatorManagerGasPercent);
+                && iceCount > generatorManagerIceMinCount && gasPercent > generatorManagerGasPercent;
             string status = enable ? "Активно" : "Простой";
             writeOnPBScreen(
                     $"GeneratorManager: {status}" +
                     "\n\nУсловия для работы:" +
                     $"\nЗарядка батарей <= {generatorManagerBattareyPercent}%" +
                     $"\nи Лёд > {generatorManagerIceMinCount}" +
-                    $"\nили Водород > {generatorManagerGasPercent}%"
+                    $"\nи Водород > {generatorManagerGasPercent}%"
                 );
             foreach (var gen in generators) {
                 gen.Enabled = enable;
