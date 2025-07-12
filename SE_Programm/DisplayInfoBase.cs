@@ -223,11 +223,11 @@ namespace DisplayInfoBase
                     else if (tag == userKeyBatteries) output.AppendLine(batteriesInfo.Key);
                     else if (tag == userKeyTurbines) output.AppendLine(turbinesInfoString);
                     else if (tag == userKeyGenerators) output.AppendLine(generatorInfoString);
-                    else if (tag == userKeyVolumeCargo) output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
+                    else if (tag == userKeyVolumeCargo) output.AppendLine(GetProgressBar("Объём груза", cargoMass, cargoMassMax));
                     else if (tag == userKeyMassShip) output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
                     else if (tag == userKeyMassCargo) output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
-                    else if (tag == userKeyHydrogen) output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
-                    else if (tag == userKeyOxygen) output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
+                    else if (tag == userKeyHydrogen) output.AppendLine(GetProgressBar("Водород", hydrogenCurrentValue, hydrogenCapacityValue));
+                    else if (tag == userKeyOxygen) output.AppendLine(GetProgressBar("Кислород", oxygenCurrentValue, oxygenCapacityValue));
                     else if (tag == userKeyConnectors) output.AppendLine(connectorsInfoString);
                     else if (tag == userKeyReactors) output.AppendLine(reactorsInfoString);
                 }
@@ -705,6 +705,28 @@ namespace DisplayInfoBase
             } else {
                 Echo("Инициализация провалена!\nНе осталось RetryAttempt!");
             }
+        }
+
+        string GetProgressBar(
+            string title,
+            double current, 
+            double max, 
+            bool percent = true,
+            bool numbers = false,
+            int barLength = 50, 
+            char filledChar = '|', 
+            char emptyChar = '.'
+        ) {
+            
+            if (max <= 0 || current < 0) return "[Ошибка: Некорректные значения]"; 
+            current = Math.Min(current, max); 
+            double fillRatio = current / max;
+            int filledLength = (int)Math.Round(fillRatio * barLength); 
+            string progressBar = new string(filledChar, filledLength) 
+                + new string(emptyChar, barLength - filledLength);
+            string percentInfo = percent ? $" {fillRatio:P0}" : "";
+            string numbersInfo = numbers ? $" {current:#,##0}/{max:#,##0}" : "";
+            return $"[{progressBar}] {title}{percentInfo}{numbersInfo}";
         }
         /// End of the script
     }
