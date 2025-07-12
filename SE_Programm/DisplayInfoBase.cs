@@ -30,6 +30,7 @@ namespace DisplayInfoBase
 
 
         /// Start of the script
+        const string pbGeneratorTemplate = "\ngeneratorManager(Bat,Ice,H2)";
         const string ingotType = "MyObjectBuilder_Ingot/";
         const string componentType = "MyObjectBuilder_Component/";
         const string oreType = "MyObjectBuilder_Ore/";
@@ -37,25 +38,43 @@ namespace DisplayInfoBase
         const string gunType = "MyObjectBuilder_PhysicalGunObject/";
         const string ammoType = "MyObjectBuilder_AmmoMagazine/";
         const string oxygenType = "MyObjectBuilder_OxygenContainerObject/";
-        //
         const string unknownType = "Unknown";
+        const string userKeyGeneratorManager = "generatormanager(";
+        const string userKeySpacer = "space";
+        const string userKeyTextAlign = "-align(";
+        const string userKeyFontSize = "-fontsize(";
+        const string userKeyIgnots = "ignots";
+        const string userKeyOres = "ores";
+        const string userKeyComponents = "components";
+        const string userKeyPhysicals = "physicals";
+        const string userKeyAmmos = "ammos";
+        const string userKeyGuns = "guns";
+        const string userKeyOxygenBottle = "oxygenbottle";
+        const string userKeyUnknown = "nunknown";
+        const string userKeyBatteries = "batteries";
+        const string userKeyTurbines = "turbines";
+        const string userKeyGenerators = "generators";
+        const string userKeyVolumeCargo = "volumeCargo";
+        const string userKeyMassShip = "massShip";
+        const string userKeyMassCargo = "massCargo";
+        const string userKeyHydrogen = "hydrogen";
+        const string userKeyOxygen = "oxygen";
+        const string userKeyConnectors = "connectors";
+        const string userKeyReactors = "reactors";
 
-        const string generatorManagerKeyWord = "generatormanager(";
-        const string textAlignKeyWord = "-align(";
-        const string fontSizeKeyWord = "-fontsize(";
 
-        const string pbGeneratorTemplate = "\ngeneratorManager(Bat,Ice,H2)";
         const string textPannelsComands = "Введите доступные значения: " +
                         "\n\n-= Инвентарь =-" +
-                        "\nignots | ores | components" +
-                        "\nphysicals | ammos | guns" +
-                        "\noxygenbottle | nunknown" +
+                        $"\n{userKeyIgnots} | {userKeyOres} | {userKeyComponents}" +
+                        $"\n{userKeyPhysicals} | {userKeyAmmos} | {userKeyGuns}" +
+                        $"\n{userKeyOxygenBottle} | {userKeyUnknown}" +
                         "\n\n-= Блоки =-" +
-                        "\nbatteries | turbines | generators" +
-                        "\nvolumeCargo | massShip | massCargo" +
-                        "\nhydrogen | oxygen | connectors" +
+                        $"\n{userKeyBatteries} | {userKeyTurbines} | {userKeyGenerators}" +
+                        $"\n{userKeyVolumeCargo} | {userKeyMassShip} | {userKeyMassCargo}" +
+                        $"\n{userKeyHydrogen} | {userKeyOxygen} | {userKeyConnectors}" +
+                        $"\n{userKeyReactors}" +
                         "\n\n-= Форматирование =-" +
-                        "\nspace | -fontsize(1.0) | -align(l/c/r)";
+                        $"\n{userKeySpacer} | {userKeyFontSize}1.0) | {userKeyTextAlign}l/c/r)";
 
         const string hydrogenCapacity = "hydrogenCapacity";
         const string hydrogenCurrent = "hydrogenCurrent";
@@ -77,6 +96,7 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Ingot/Platinum", "Платина"},
 
             {"MyObjectBuilder_Ore/Ice", "Лёд"},
+            {"MyObjectBuilder_Ore/Scrap", "Металлолом"},
             {"MyObjectBuilder_Ore/Stone", "Камень"},
             {"MyObjectBuilder_Ore/Iron", "Железная руда"},
             {"MyObjectBuilder_Ore/Silicon", "Кремневая руда"},
@@ -127,6 +147,8 @@ namespace DisplayInfoBase
         List<IMyGasTank> oxygenTanks = new List<IMyGasTank>();
         List<IMyShipConnector> connectors = new List<IMyShipConnector>();
 
+        List<IMyReactor> reactors = new List<IMyReactor>();
+
         List<IMyShipController> controllers = new List<IMyShipController>();
         IMyProgrammableBlock program;
         System.Globalization.CultureInfo provider = System.Globalization.CultureInfo.InvariantCulture;
@@ -168,12 +190,13 @@ namespace DisplayInfoBase
             String generatorInfoString = getGeneratorInfo();
             String turbinesInfoString = getTurbinesInfo();
             String connectorsInfoString = getConnectorInfo();
+            String reactorsInfoString = getReactorsInfo();
             var shipMassPair = getShipBaseTotalMass();
             float shipMassBase = shipMassPair.Key;
             float shipCargoMass = shipMassPair.Value - shipMassBase;
             var iceCount = getItemCount(allCargo, "MyObjectBuilder_Ore/Ice");
             KeyValuePair<String, double> batteriesInfo = getBatteriesInfo();
-            if (program.CustomData.ToLower().Contains(generatorManagerKeyWord)) {
+            if (program.CustomData.ToLower().Contains(userKeyGeneratorManager)) {
                 manageGenegators(
                     batteriesInfo.Value,
                     iceCount,
@@ -188,28 +211,26 @@ namespace DisplayInfoBase
                 StringBuilder output = new StringBuilder();
                 List<string> tags = customData.Split('\n').Select(t => t.Trim()).ToList();
                 foreach (string tag in tags) {
-                    if (tag == "space") output.AppendLine("");
-                    else if (tag == "ignots" && ingots != "") output.AppendLine($"-= Слитки =-{ingots}");
-                    else if (tag == "ores" && ore != "") output.AppendLine($"-= Руда =-{ore}");
-                    else if (tag == "components" && components != "") output.AppendLine($"-= Компоненты =-{components}");
-                    //
-                    else if (tag == "physicals" && physycal != "") output.Append(physycal);
-                    else if (tag == "ammos" && ammo != "") output.Append(ammo);
-                    else if (tag == "guns" && guns != "") output.Append(guns);
-                    else if (tag == "oxygenbottle" && oxygenBottle != "") output.Append(oxygenBottle);
-                    //
-                    else if (tag == "unknown" && unknown != "") output.Append(unknown);
-                    else if (tag == "batteries") output.AppendLine(batteriesInfo.Key);
-                    else if (tag == "turbines") output.AppendLine(turbinesInfoString);
-                    else if (tag == "generators") output.AppendLine(generatorInfoString);
-                    else if (tag == "volumecargo") output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
-                    else if (tag == "massship")  output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
-                    else if (tag == "masscargo") output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
-                    else if (tag == "hydrogen") output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
-                    else if (tag == "oxygen") output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
-                    else if (tag == "connectors") output.AppendLine(connectorsInfoString);
+                    if (tag == userKeySpacer) output.AppendLine("");
+                    else if (tag == userKeyIgnots && ingots != "") output.AppendLine($"-= Слитки =-{ingots}");
+                    else if (tag == userKeyOres && ore != "") output.AppendLine($"-= Руда =-{ore}");
+                    else if (tag == userKeyComponents && components != "") output.AppendLine($"-= Компоненты =-{components}");
+                    else if (tag == userKeyPhysicals && physycal != "") output.Append(physycal);
+                    else if (tag == userKeyAmmos && ammo != "") output.Append(ammo);
+                    else if (tag == userKeyGuns && guns != "") output.Append(guns);
+                    else if (tag == userKeyOxygenBottle && oxygenBottle != "") output.Append(oxygenBottle);
+                    else if (tag == userKeyUnknown && unknown != "") output.Append(unknown);
+                    else if (tag == userKeyBatteries) output.AppendLine(batteriesInfo.Key);
+                    else if (tag == userKeyTurbines) output.AppendLine(turbinesInfoString);
+                    else if (tag == userKeyGenerators) output.AppendLine(generatorInfoString);
+                    else if (tag == userKeyVolumeCargo) output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
+                    else if (tag == userKeyMassShip)  output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
+                    else if (tag == userKeyMassCargo) output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
+                    else if (tag == userKeyHydrogen) output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
+                    else if (tag == userKeyOxygen) output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
+                    else if (tag == userKeyConnectors) output.AppendLine(connectorsInfoString);
+                    else if (tag == userKeyReactors) output.AppendLine(reactorsInfoString);
                 }
-
                 if (output.Length > 0) {
                     myTextPanel.WriteText(output.ToString());
                 } else {
@@ -237,6 +258,7 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(textPanels, textPanel => textPanel.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipController>(controllers, i => i.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyReactor>(reactors, i => i.CubeGrid == currentGrid);
             applyProgrammBlockSettings();
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
@@ -293,9 +315,9 @@ namespace DisplayInfoBase
             myTextPanel.ContentType = ContentType.TEXT_AND_IMAGE;
             myTextPanel.FontColor = Color.DarkGreen;
             string customData = myTextPanel.CustomData.ToLower();
-            int fontSizeStart = customData.IndexOf(fontSizeKeyWord);
+            int fontSizeStart = customData.IndexOf(userKeyFontSize);
             if (fontSizeStart >= 0) {
-                int start = fontSizeStart + fontSizeKeyWord.Length;
+                int start = fontSizeStart + userKeyFontSize.Length;
                 int end = customData.IndexOf(")", start);
                 if (end > start) {
                     string sizeValue = customData.Substring(start, end - start);
@@ -305,9 +327,9 @@ namespace DisplayInfoBase
                     }
                 }
             }
-            int alignStart = customData.IndexOf(textAlignKeyWord);
+            int alignStart = customData.IndexOf(userKeyTextAlign);
             if (alignStart >= 0) {
-                int start = alignStart + textAlignKeyWord.Length;
+                int start = alignStart + userKeyTextAlign.Length;
                 int end = customData.IndexOf(")", start);
                 if (end > start) {
                     string alignValue = customData.Substring(start, end - start);
@@ -410,6 +432,14 @@ namespace DisplayInfoBase
                             maxVolume += inventory.MaxVolume.RawValue;
                             collectInventoryItems(inventory, itemMap);
                         }
+                    }
+                }
+                if (reactors.Count > 0) {
+                    foreach (IMyReactor container in reactors) {
+                        IMyInventory inventory = container.GetInventory(0);
+                        cargoVolume += inventory.CurrentVolume.RawValue;
+                        maxVolume += inventory.MaxVolume.RawValue;
+                        collectInventoryItems(inventory, itemMap);
                     }
                 }
             } catch { reInit(); }
@@ -552,15 +582,44 @@ namespace DisplayInfoBase
             return result;
         }
 
+        String getReactorsInfo() {
+            StringBuilder sb = new StringBuilder();
+            float currentPowerOutput = 0f;
+            float maxPowerOutput = 0f;
+            float uraniumAmount = 0f;
+            int workingReactors = 0;
+            if (reactors.Count == 0) sb.Append("\nРеактороы не найдены");
+            else {
+                foreach (var reactor in reactors) {
+                    if (!reactor.IsWorking) continue;
+                    var inventory = reactor.GetInventory(0);
+                    currentPowerOutput += reactor.CurrentOutput;
+                    maxPowerOutput += reactor.MaxOutput;
+                    uraniumAmount += (float)inventory.CurrentMass;
+                    workingReactors++;
+                }
+                if (workingReactors>0) {
+                    sb.Append(
+                        $"\nРаботает {workingReactors}/{reactors.Count} реакторов" +
+                        $"\nТекущая мощность {currentPowerOutput:0.00} МВт" +
+                        $"\nУран: {uraniumAmount:0.00} кг"
+                    );
+                } else {
+                    sb.Append($"\nРеакторы простаивают");
+                }  
+            }
+            return sb.ToString();
+        }
+
         void manageGenegators(double batteriesPercent, int iceCount, double gasPercent) {
             if (generators.Count == 0) {
                 writeOnPBScreen("Генераторы не найдены");
                 return;
             }
 
-            int index = program.CustomData.ToLower().IndexOf(generatorManagerKeyWord);
+            int index = program.CustomData.ToLower().IndexOf(userKeyGeneratorManager);
             if (index >= 0) {
-                int start = index + generatorManagerKeyWord.Length;
+                int start = index + userKeyGeneratorManager.Length;
                 int end = program.CustomData.IndexOf(")", start);
                 if (end > start) {
                     String payloadRaw = program.CustomData.Substring(start, end - start);
@@ -579,16 +638,21 @@ namespace DisplayInfoBase
                     }
                 }
             }
-            Boolean enable = 
-                batteriesPercent <= generatorManagerBattareyPercent 
-                && iceCount > generatorManagerIceMinCount && gasPercent > generatorManagerGasPercent;
-            string status = enable ? "Активно" : "Простой";
+            Boolean mustBeCharged = batteriesPercent <= generatorManagerBattareyPercent;
+            Boolean iceEnough = iceCount > generatorManagerIceMinCount;
+            Boolean gasEnough = gasPercent > generatorManagerGasPercent;
+            Boolean enable = mustBeCharged && iceEnough && gasEnough;
+            string batStatus = mustBeCharged ? "[v] Нужда в зарядке" : "[x] Батареи заряжены";
+            string iceStatus = iceEnough ? "[v] Льда достаточно" : "[x] Льда недостаточно";
+            string gasStatus = gasEnough ? "[v] Водорода достаточно" : "[x] Водорода недостаточно";
+            string status = enable 
+                ? "[v] Генераторы работают" 
+                : $"{batStatus} : {batteriesPercent}/{generatorManagerBattareyPercent}%" +
+                $"\n{iceStatus} : {iceCount}/{generatorManagerIceMinCount}" +
+                $"\n{gasStatus} : {gasPercent}/{generatorManagerGasPercent}";
             writeOnPBScreen(
-                    $"GeneratorManager: {status}" +
-                    "\n\nУсловия для работы:" +
-                    $"\nЗарядка батарей <= {generatorManagerBattareyPercent}%" +
-                    $"\nи Лёд > {generatorManagerIceMinCount}" +
-                    $"\nи Водород > {generatorManagerGasPercent}%"
+                    "GeneratorManager" +
+                    $"\n\n{status}"
                 );
             foreach (var gen in generators) {
                 gen.Enabled = enable;
