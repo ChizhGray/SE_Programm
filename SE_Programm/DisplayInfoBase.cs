@@ -33,9 +33,12 @@ namespace DisplayInfoBase
         const String oreType = "MyObjectBuilder_Ore/";
         const String unknownType = "Unknown";
 
-        const String gasCapacity = "gasCapacity";
-        const String gasCurrent = "gasCurrent";
-        const String gasPercent  = "gasPercent";
+        const String hydrogenCapacity = "hydrogenCapacity";
+        const String hydrogenCurrent = "hydrogenCurrent";
+        const String hydrogenPercent  = "hydrogenPercent";
+        const String oxygenCapacity = "oxygenCapacity";
+        const String oxygenCurrent = "oxygenCurrent";
+        const String oxygenPercent = "oxygenPercent";
 
         Dictionary<String, String> dictionary = new Dictionary<String, String> {
             {"MyObjectBuilder_Ingot/Stone", "Гравий"},
@@ -88,10 +91,11 @@ namespace DisplayInfoBase
         List<IMyBatteryBlock> batteries = new List<IMyBatteryBlock>();
         List<IMyWindTurbine> turbines = new List<IMyWindTurbine>();
         List<IMyPowerProducer> generators = new List<IMyPowerProducer>();
-        List<IMyGasTank> gasTanks = new List<IMyGasTank>();
+        List<IMyGasTank> hydrogenTanks = new List<IMyGasTank>();
+        List<IMyGasTank> oxygenTanks = new List<IMyGasTank>();
         List<IMyShipConnector> connectors = new List<IMyShipConnector>();
-        
 
+        List<IMyShipController> controllers = new List<IMyShipController>();
         IMyProgrammableBlock program;
 
         double cargoMass = 0;
@@ -116,12 +120,18 @@ namespace DisplayInfoBase
             String components = stringItemMap[componentType];
             String ore = stringItemMap[oreType];
             String unknown = stringItemMap[unknownType];
-            double gasPercentValue = gasInfo[gasPercent];
-            double gasCurrentValue = gasInfo[gasCurrent];
-            double gasCapacityValue = gasInfo[gasCapacity];
+            double hydrogenPercentValue = gasInfo[hydrogenPercent];
+            double hydrogenCurrentValue = gasInfo[hydrogenCurrent];
+            double hydrogenCapacityValue = gasInfo[hydrogenCapacity];
+            double oxygenPercentValue = gasInfo[oxygenPercent];
+            double oxygenCurrentValue = gasInfo[oxygenCurrent];
+            double oxygenCapacityValue = gasInfo[oxygenCapacity];
             String generatorInfoString = getGeneratorInfo();
             String turbinesInfoString = getTurbinesInfo();
             String connectorsInfoString = getConnectorInfo();
+            var shipMassPair = getShipBaseTotalMass();
+            float shipMassBase = shipMassPair.Key;
+            float shipCargoMass = shipMassPair.Value - shipMassBase;
             var iceCount = getItemCount(allCargo, "MyObjectBuilder_Ore/Ice");
             KeyValuePair<String, double> batteriesInfo = getBatteriesInfo();
             if (program.CustomData.ToLower().Contains("generatormanager")) {
@@ -130,7 +140,7 @@ namespace DisplayInfoBase
                     generatorManagerBattareyPercent, 
                     iceCount, 
                     generatorManagerIceMinCount, 
-                    gasPercentValue, 
+                    hydrogenPercentValue, 
                     generatorManagerGasPercent
                 );
             }
@@ -139,26 +149,34 @@ namespace DisplayInfoBase
                 StringBuilder output = new StringBuilder();
                 List<string> tags = customData.Split('\n').Select(t => t.Trim()).ToList();
                 foreach (string tag in tags) {
-                    if (tag == "ignots" && ingots != "")
+                    if (tag == "space")
+                        output.AppendLine("");
+                    else if (tag == "ignots" && ingots != "")
                         output.AppendLine($"-= Слитки =-\n{ingots}");
                     else if (tag == "ores" && ore != "")
                         output.AppendLine($"-= Руда =-\n{ore}");
                     else if (tag == "components" && components != "")
                         output.AppendLine($"-= Компоненты =-\n{components}");
                     else if (tag == "unknown" && unknown != "")
-                        output.AppendLine($"-= не распознано =-\n{unknown}");
+                        output.AppendLine($"-=  Не распознано =-\n{unknown}");
                     else if (tag == "batteries")
                         output.AppendLine(batteriesInfo.Key);
                     else if (tag == "turbines")
                         output.AppendLine(turbinesInfoString);
                     else if (tag == "generators")
                         output.AppendLine(generatorInfoString);
-                    else if (tag == "mass")
-                        output.AppendLine($"Масса груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}\n");
-                    else if (tag == "gas")
-                        output.Append($"Водород: {gasPercentValue}% ({gasCurrentValue:#,##0}/{gasCapacityValue:#,##0})\n");
+                    else if (tag == "volumecargo")
+                        output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
+                    else if (tag == "massship")
+                        output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
+                    else if (tag == "masscargo")
+                        output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
+                    else if (tag == "hydrogen")
+                        output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
+                    else if (tag == "oxygen")
+                        output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
                     else if (tag == "connectors")
-                        output.Append(connectorsInfoString);
+                        output.AppendLine(connectorsInfoString);
                 }
 
                 if (output.Length > 0) {
@@ -166,17 +184,21 @@ namespace DisplayInfoBase
                 } else {
                     myTextPanel.WriteText(
                         "Введите доступные значения: " +
-                        "\nignots" +
+                        "\n\nignots" +
                         "\nores" +
                         "\ncomponents" +
                         "\nunknown" +
-                        "\nbatteries" +
+                        "\n\nbatteries" +
                         "\nturbines" +
                         "\ngenerators" +
-                        "\nmass" +
-                        "\ngas" +
+                        "\nvolumeCargo" +
+                        "\nmassShip" +
+                        "\nmassCargo" +
+                        "\nhydrogen" +
+                        "\noxygen" +
                         "\nconnectors" +
-                        "\n\n-fontsize(1.0)" +
+                        "\n\nspace" +
+                        "\n-fontsize(1.0)" +
                         "\n-align(l/c/r)"
                     );
                 }
@@ -196,9 +218,11 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteries, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyWindTurbine>(turbines, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyPowerProducer>(generators, i => i.CubeGrid == currentGrid && i.BlockDefinition.SubtypeName.Contains("HydrogenEngine"));
-            GridTerminalSystem.GetBlocksOfType<IMyGasTank>(gasTanks, i => i.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyGasTank>(hydrogenTanks, i => i.CubeGrid == currentGrid && i.BlockDefinition.SubtypeId.Contains("Hydrogen"));
+            GridTerminalSystem.GetBlocksOfType<IMyGasTank>(oxygenTanks, i => i.CubeGrid == currentGrid && i.BlockDefinition.SubtypeId.Contains("Oxygen"));
             GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(textPanels, textPanel => textPanel.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyShipController>(controllers, i => i.CubeGrid == currentGrid);
             applyTextPannelsSettings();
             applyProgrammBlockSettings();
         }
@@ -226,7 +250,7 @@ namespace DisplayInfoBase
 
         void writeOnPBScreen(string text) {
             var screen = program.GetSurface(0);
-            screen.WriteText($"-=DisplayInfoBase=-\n{getAnimate()}\n\n{text}");
+            screen.WriteText($"-=DisplayInfoBase=-\n\n{text}");
         }
 
         void applyProgrammBlockSettings() {
@@ -275,32 +299,45 @@ namespace DisplayInfoBase
         }
         
         Dictionary<String, Double> getGasInfo() {
-            float capacity = 0;
-            Double current = 0;
-            Double percent = 0;
-            if (gasTanks.Count > 0) {
-                foreach (IMyGasTank tank in gasTanks) {
-                    capacity += tank.Capacity;
-                    percent += tank.FilledRatio;
-                    current += tank.Capacity * tank.FilledRatio;
+            float hydrogenCapacity = 0;
+            Double hydrogenCurrent = 0;
+            Double hydrogenPercent = 0;
+            float oxygenCapacity = 0;
+            Double oxygenCurrent = 0;
+            Double oxygenPercent = 0;
+            if (hydrogenTanks.Count > 0) {
+                foreach (IMyGasTank tank in hydrogenTanks) {
+                    hydrogenCapacity += tank.Capacity;
+                    hydrogenPercent += tank.FilledRatio;
+                    hydrogenCurrent += tank.Capacity * tank.FilledRatio;
                 }
             }
-            return new Dictionary<String, Double> {
-                {gasCapacity, Math.Round(capacity, 1) },
-                {gasCurrent, Math.Round(current, 1) },
-                {gasPercent, Math.Round(gasTanks.Count > 0 ? (percent/gasTanks.Count)*100 : 0, 1) }
+            if (oxygenTanks.Count > 0) {
+                foreach (IMyGasTank tank in oxygenTanks) {
+                    oxygenCapacity += tank.Capacity;
+                    oxygenPercent += tank.FilledRatio;
+                    oxygenCurrent += tank.Capacity * tank.FilledRatio;
+                }
+            }
+            return new Dictionary<string, double> {
+                { Program.hydrogenCapacity, Math.Round(hydrogenCapacity, 1) },
+                { Program.hydrogenCurrent, Math.Round(hydrogenCurrent, 1) },
+                { Program.hydrogenPercent, Math.Round(hydrogenTanks.Count > 0 ? (hydrogenPercent/hydrogenTanks.Count)*100 : 0, 1) },
+                { Program.oxygenCapacity, Math.Round(oxygenCapacity, 1) },
+                { Program.oxygenCurrent, Math.Round(oxygenCurrent, 1) },
+                { Program.oxygenPercent, Math.Round(oxygenTanks.Count > 0 ? (oxygenPercent/oxygenTanks.Count)*100 : 0, 1) }
             };
         }
 
         Dictionary<String, int> getCargo() {
             Dictionary<String, int> itemMap = new Dictionary<string, int>();
-            float totalMass = 0;
-            float totalMassMax = 0;
+            float cargoVolume = 0;
+            float maxVolume = 0;
             if (cargoContainers.Count > 0) {
                 foreach (IMyCargoContainer container in cargoContainers) {
                     IMyInventory inventory = container.GetInventory(0);
-                    totalMass += inventory.CurrentMass.RawValue;
-                    totalMassMax += inventory.MaxVolume.RawValue;
+                    cargoVolume += inventory.CurrentVolume.RawValue;
+                    maxVolume += inventory.MaxVolume.RawValue;
                     collectInventoryItems(inventory, itemMap);
                 }
             }
@@ -308,10 +345,10 @@ namespace DisplayInfoBase
                 foreach (IMyAssembler container in assemblers) {
                     IMyInventory inventory0 = container.GetInventory(0);
                     IMyInventory inventory1 = container.GetInventory(1);
-                    totalMass += inventory0.CurrentMass.RawValue;
-                    totalMass += inventory1.CurrentMass.RawValue;
-                    totalMassMax += inventory0.MaxVolume.RawValue;
-                    totalMassMax += inventory1.MaxVolume.RawValue;
+                    cargoVolume += inventory0.CurrentVolume.RawValue;
+                    cargoVolume += inventory1.CurrentVolume.RawValue;
+                    maxVolume += inventory0.MaxVolume.RawValue;
+                    maxVolume += inventory1.MaxVolume.RawValue;
                     collectInventoryItems(inventory0, itemMap);
                     collectInventoryItems(inventory1, itemMap);
                 }
@@ -320,10 +357,10 @@ namespace DisplayInfoBase
                 foreach (IMyRefinery container in refinerys) {
                     IMyInventory inventory0 = container.GetInventory(0);
                     IMyInventory inventory1 = container.GetInventory(1);
-                    totalMass += inventory0.CurrentMass.RawValue;
-                    totalMass += inventory1.CurrentMass.RawValue;
-                    totalMassMax += inventory0.MaxVolume.RawValue;
-                    totalMassMax += inventory1.MaxVolume.RawValue;
+                    cargoVolume += inventory0.CurrentVolume.RawValue;
+                    cargoVolume += inventory1.CurrentVolume.RawValue;
+                    maxVolume += inventory0.MaxVolume.RawValue;
+                    maxVolume += inventory1.MaxVolume.RawValue;
                     collectInventoryItems(inventory0, itemMap);
                     collectInventoryItems(inventory1, itemMap);
                 }
@@ -331,16 +368,16 @@ namespace DisplayInfoBase
             if (gasGenerators.Count > 0) {
                 foreach (IMyGasGenerator container in gasGenerators) {
                     IMyInventory inventory = container.GetInventory(0);
-                    totalMass += inventory.CurrentMass.RawValue;
-                    totalMassMax += inventory.MaxVolume.RawValue;
+                    cargoVolume += inventory.CurrentVolume.RawValue;
+                    maxVolume += inventory.MaxVolume.RawValue;
                     collectInventoryItems(inventory, itemMap);
                 }
             }
             if (drills.Count > 0) {
                 foreach (IMyShipDrill container in drills) {
                     IMyInventory inventory = container.GetInventory(0);
-                    totalMass += inventory.CurrentMass.RawValue;
-                    totalMassMax += inventory.MaxVolume.RawValue;
+                    cargoVolume += inventory.CurrentVolume.RawValue;
+                    maxVolume += inventory.MaxVolume.RawValue;
                     collectInventoryItems(inventory, itemMap);
                 }
             }
@@ -348,15 +385,15 @@ namespace DisplayInfoBase
                 foreach (IMyCockpit container in cockpits) {
                     if (container.HasInventory) {
                         IMyInventory inventory = container.GetInventory(0);
-                        totalMass += inventory.CurrentMass.RawValue;
-                        totalMassMax += inventory.MaxVolume.RawValue;
+                        cargoVolume += inventory.CurrentVolume.RawValue;
+                        maxVolume += inventory.MaxVolume.RawValue;
                         collectInventoryItems(inventory, itemMap);
                     }
                     
                 }
             }
-            cargoMass = totalMass/1000;
-            cargoMassMax = totalMassMax;
+            cargoMass = cargoVolume;
+            cargoMassMax = maxVolume;
             return itemMap;
         }
 
@@ -392,7 +429,7 @@ namespace DisplayInfoBase
                 String name = tryTranslate(key);
                 sb.AppendLine($"{name}: {source[key]}");
             }
-            var result = sb.ToString() != "" ? sb.ToString(): "-\n";
+            var result = sb.ToString() != "" ? sb.ToString(): "нет в наличии";
             return result;
         }
 
@@ -406,7 +443,8 @@ namespace DisplayInfoBase
                 String name = tryTranslate(key);
                 sb.AppendLine($"{name}: {source[key]}");
             }
-            return sb.ToString();
+            var result = sb.ToString() != "" ? sb.ToString() : "нет в наличии";
+            return result;
         }
 
         int getItemCount(Dictionary<String, int> itemMap, String type) {
@@ -417,7 +455,7 @@ namespace DisplayInfoBase
         }
 
         KeyValuePair<String, double> getBatteriesInfo() {
-            if (batteries.Count == 0) return new KeyValuePair<String, double>("Батареи не найдены\n", 0.0);
+            if (batteries.Count == 0) return new KeyValuePair<String, double>("Батареи не найдены", 0.0);
             double stored = 0;
             double max = 0;
             bool isCharging = false;
@@ -430,22 +468,22 @@ namespace DisplayInfoBase
             } 
             string status = isCharging ? "заряжаются" : isDischarging ? "разряжаются" : "в режиме ожидания";
             double percent = Math.Round(stored / max * 100, 1);
-            return new KeyValuePair<String, double>($"Баттареи {status}: {percent}%\n", percent);
+            return new KeyValuePair<String, double>($"Баттареи {status}: {percent}%", percent);
         }
 
         String getTurbinesInfo() {
-            if (turbines.Count == 0) return "Ветряные турбины не найдены\n";
+            if (turbines.Count == 0) return "Ветряные турбины не найдены";
             float totalOutput = 0f;
             int workingTurbines = 0;
             foreach (var turbine in turbines) {
                 totalOutput += turbine.CurrentOutput;
                 if (turbine.IsWorking) workingTurbines++;
             }
-            return $"Турбины: {workingTurbines}/{turbines.Count} работают ({Math.Round(totalOutput, 2)} МВт)\n";
+            return $"Турбины: {workingTurbines}/{turbines.Count} работают ({Math.Round(totalOutput, 2)} МВт)";
         }
 
         String getGeneratorInfo() {
-            if (generators.Count == 0) return "Водородные генераторы не найдены\n";
+            if (generators.Count == 0) return "Водородные генераторы не найдены";
             float currentOutput = 0f;
             float maxOutput = 0f;
             int workingGenerators = 0;
@@ -454,8 +492,8 @@ namespace DisplayInfoBase
                 currentOutput += gen.CurrentOutput;
                 if (gen.IsWorking) workingGenerators++;
             }
-            if (workingGenerators == 0) return "Генераторы не работают\n";
-            return $"Генераторы: {workingGenerators}/{generators.Count} работают ({Math.Round(currentOutput, 2)} МВт)\n";
+            if (workingGenerators == 0) return "Генераторы не работают";
+            return $"Генераторы: {workingGenerators}/{generators.Count} работают ({Math.Round(currentOutput, 2)} МВт)";
         }
 
         String getConnectorInfo() {
@@ -473,6 +511,15 @@ namespace DisplayInfoBase
             return sb.ToString();
         }
 
+        KeyValuePair<float, float> getShipBaseTotalMass() {
+            var result = new KeyValuePair<float, float>();
+            if (controllers.Count == 0) return result;
+            IMyShipController controller = controllers[0];
+            var mass = controller.CalculateShipMass();
+            result = new KeyValuePair<float, float>(mass.BaseMass, mass.TotalMass);
+            return result;
+        }
+
         void manageGenegators(double batteriesPercent, double enableOn, int iceCount, int iceMinValue, double gasPercent, double gasMinValue) {
             if (generators.Count == 0) {
                 writeOnPBScreen("Генераторы не найдены");
@@ -482,7 +529,8 @@ namespace DisplayInfoBase
             string status = enable ? "зарядка" : "простой";
             writeOnPBScreen(
                     $"GeneratorManager: {status}" +
-                    "\nУсловия для работы:" +
+                    $"\n{getAnimate()}" +
+                    "\n\nУсловия для работы:" +
                     $"\nЗарядка батарей <= {generatorManagerBattareyPercent}%" +
                     $"\nЛёд > {generatorManagerIceMinCount}" +
                     $"\nВодород > {generatorManagerGasPercent}%"
