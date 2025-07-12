@@ -54,9 +54,9 @@ namespace DisplayInfoBase
         const string userKeyBatteries = "batteries";
         const string userKeyTurbines = "turbines";
         const string userKeyGenerators = "generators";
-        const string userKeyVolumeCargo = "volumeCargo";
-        const string userKeyMassShip = "massShip";
-        const string userKeyMassCargo = "massCargo";
+        const string userKeyVolumeCargo = "volumecargo";
+        const string userKeyMassShip = "massship";
+        const string userKeyMassCargo = "masscargo";
         const string userKeyHydrogen = "hydrogen";
         const string userKeyOxygen = "oxygen";
         const string userKeyConnectors = "connectors";
