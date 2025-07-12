@@ -89,6 +89,8 @@ namespace DisplayInfoBase
         List<IMyWindTurbine> turbines = new List<IMyWindTurbine>();
         List<IMyPowerProducer> generators = new List<IMyPowerProducer>();
         List<IMyGasTank> gasTanks = new List<IMyGasTank>();
+        List<IMyShipConnector> connectors = new List<IMyShipConnector>();
+        
 
         IMyProgrammableBlock program;
 
@@ -119,6 +121,7 @@ namespace DisplayInfoBase
             double gasCapacityValue = gasInfo[gasCapacity];
             String generatorInfoString = getGeneratorInfo();
             String turbinesInfoString = getTurbinesInfo();
+            String connectorsInfoString = getConnectorInfo();
             var iceCount = getItemCount(allCargo, "MyObjectBuilder_Ore/Ice");
             KeyValuePair<String, double> batteriesInfo = getBatteriesInfo();
             if (program.CustomData.ToLower().Contains("generatormanager")) {
@@ -154,6 +157,8 @@ namespace DisplayInfoBase
                         output.AppendLine($"Масса груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}\n");
                     else if (tag == "gas")
                         output.Append($"Водород: {gasPercentValue}% ({gasCurrentValue:#,##0}/{gasCapacityValue:#,##0})\n");
+                    else if (tag == "connectors")
+                        output.Append(connectorsInfoString);
                 }
 
                 if (output.Length > 0) {
@@ -170,6 +175,7 @@ namespace DisplayInfoBase
                         "\ngenerators" +
                         "\nmass" +
                         "\ngas" +
+                        "\nconnectors" +
                         "\n\n-fontsize(1.0)" +
                         "\n-align(l/c/r)"
                     );
@@ -192,6 +198,7 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyPowerProducer>(generators, i => i.CubeGrid == currentGrid && i.BlockDefinition.SubtypeName.Contains("HydrogenEngine"));
             GridTerminalSystem.GetBlocksOfType<IMyGasTank>(gasTanks, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(textPanels, textPanel => textPanel.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
             applyTextPannelsSettings();
             applyProgrammBlockSettings();
         }
@@ -219,7 +226,7 @@ namespace DisplayInfoBase
 
         void writeOnPBScreen(string text) {
             var screen = program.GetSurface(0);
-            screen.WriteText($"-=DisplayInfoBase=-\n{getAnimate()}\n{text}");
+            screen.WriteText($"-=DisplayInfoBase=-\n{getAnimate()}\n\n{text}");
         }
 
         void applyProgrammBlockSettings() {
@@ -448,6 +455,21 @@ namespace DisplayInfoBase
             }
             if (workingGenerators == 0) return "Генераторы не работают\n";
             return $"Генераторы: {workingGenerators}/{generators.Count} работают ({Math.Round(currentOutput, 2)} МВт)\n";
+        }
+
+        String getConnectorInfo() {
+            var sb = new StringBuilder();
+            if (connectors.Count == 0) return "Нет коннекторов!";
+            foreach (var connector in connectors) {
+                if (connector.Status == MyShipConnectorStatus.Connected) { 
+                    IMyShipConnector otherConnector = connector.OtherConnector;
+                    IMyCubeGrid connectedGrid = otherConnector.CubeGrid;
+                    sb.AppendLine($"'{connector.CustomName}' -> {connectedGrid.DisplayName}");
+                } else {
+                    sb.AppendLine($"'{connector.CustomName}' свободен");
+                }
+            }
+            return sb.ToString();
         }
 
         void manageGenegators(double batteriesPercent, double enableOn, int iceCount, int iceMinValue, double gasPercent, double gasMinValue) {
