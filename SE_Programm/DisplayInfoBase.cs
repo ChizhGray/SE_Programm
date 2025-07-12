@@ -39,6 +39,25 @@ namespace DisplayInfoBase
         const string textAlignKeyWord = "-align(";
         const string fontSizeKeyWord = "-fontsize(";
 
+        const string pbGeneratorTemplate = "\ngeneratorManager(Bat,Ice,H2)";
+        const string textPannelsComands = "Введите доступные значения: " +
+                        "\n\nignots" +
+                        "\nores" +
+                        "\ncomponents" +
+                        "\nunknown" +
+                        "\n\nbatteries" +
+                        "\nturbines" +
+                        "\ngenerators" +
+                        "\nvolumeCargo" +
+                        "\nmassShip" +
+                        "\nmassCargo" +
+                        "\nhydrogen" +
+                        "\noxygen" +
+                        "\nconnectors" +
+                        "\n\nspace" +
+                        "\n-fontsize(1.0)" +
+                        "\n-align(l/c/r)";
+
         const string hydrogenCapacity = "hydrogenCapacity";
         const string hydrogenCurrent = "hydrogenCurrent";
         const string hydrogenPercent  = "hydrogenPercent";
@@ -113,10 +132,10 @@ namespace DisplayInfoBase
         double generatorManagerGasPercent = 25;
 
         int counter = 1;
+        int retryAttempt = 3;
 
         public Program() {
             initialize();
-            Runtime.UpdateFrequency = UpdateFrequency.Update100;
         }
 
         void Main(String Argument) {
@@ -143,10 +162,12 @@ namespace DisplayInfoBase
             KeyValuePair<String, double> batteriesInfo = getBatteriesInfo();
             if (program.CustomData.ToLower().Contains(generatorManagerKeyWord)) {
                 manageGenegators(
-                    batteriesInfo.Value, 
-                    iceCount, 
+                    batteriesInfo.Value,
+                    iceCount,
                     hydrogenPercentValue
                 );
+            } else {
+                writeOnPBScreen($"\n\nДоступны команды:{pbGeneratorTemplate}");
             }
             foreach (IMyTextPanel myTextPanel in textPanels) {
                 string customData = myTextPanel.CustomData.ToLower();
@@ -187,28 +208,11 @@ namespace DisplayInfoBase
                 if (output.Length > 0) {
                     myTextPanel.WriteText(output.ToString());
                 } else {
-                    myTextPanel.WriteText(
-                        "Введите доступные значения: " +
-                        "\n\nignots" +
-                        "\nores" +
-                        "\ncomponents" +
-                        "\nunknown" +
-                        "\n\nbatteries" +
-                        "\nturbines" +
-                        "\ngenerators" +
-                        "\nvolumeCargo" +
-                        "\nmassShip" +
-                        "\nmassCargo" +
-                        "\nhydrogen" +
-                        "\noxygen" +
-                        "\nconnectors" +
-                        "\n\nspace" +
-                        "\n-fontsize(1.0)" +
-                        "\n-align(l/c/r)"
-                    );
+                    myTextPanel.WriteText(textPannelsComands);
                 }
             }
             runCounter();
+            retryAttempt = 3;
         }
 
         void initialize() {
@@ -229,10 +233,11 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipController>(controllers, i => i.CubeGrid == currentGrid);
             applyProgrammBlockSettings();
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
 
         void runCounter() {
-            if (counter < 10) counter++;
+            if (counter < 18) counter++;
             else counter = 1;
         }
 
@@ -248,13 +253,21 @@ namespace DisplayInfoBase
                 case 8: return "[=======|==]";
                 case 9: return "[========|=]";
                 case 10: return "[=========|]";
+                case 11: return "[========|=]";
+                case 12: return "[=======|==]";
+                case 13: return "[======|===]";
+                case 14: return "[=====|====]";
+                case 15: return "[====|=====]";
+                case 16: return "[===|======]";
+                case 17: return "[==|=======]";
+                case 18: return "[=|========]";
                 default: return "[==========]";
             }
         }
 
         void writeOnPBScreen(string text) {
             var screen = program.GetSurface(0);
-            screen.WriteText($"-=DisplayInfoBase=-\n\n{text}");
+            screen.WriteText($"-=DisplayInfoBase=-\n{getAnimate()}\n{text}");
         }
 
         void applyProgrammBlockSettings() {
@@ -265,10 +278,10 @@ namespace DisplayInfoBase
             screen.BackgroundColor = Color.Black;
             screen.Alignment = TextAlignment.CENTER;
             string successInit = 
-                "Успешная инициализация!" +
+                $"Успешная инициализация! (retrys:{3-retryAttempt})" +
                 $"\nнайдено {textPanels.Count} текстовых панели!";
             Echo(successInit);
-            writeOnPBScreen(successInit + "\n\nДоступны команды:\ngeneratorManager(Bat,Ice,H2)");
+            writeOnPBScreen(successInit + $"\n\nДоступны команды:{pbGeneratorTemplate}");
         }
 
         void applyTextPannelSettings(IMyTextPanel myTextPanel) {
@@ -307,20 +320,20 @@ namespace DisplayInfoBase
             float oxygenCapacity = 0;
             Double oxygenCurrent = 0;
             Double oxygenPercent = 0;
-            if (hydrogenTanks.Count > 0) {
-                foreach (IMyGasTank tank in hydrogenTanks) {
-                    hydrogenCapacity += tank.Capacity;
-                    hydrogenPercent += tank.FilledRatio;
-                    hydrogenCurrent += tank.Capacity * tank.FilledRatio;
+                if (hydrogenTanks.Count > 0) {
+                    foreach (IMyGasTank tank in hydrogenTanks) {
+                        hydrogenCapacity += tank.Capacity;
+                        hydrogenPercent += tank.FilledRatio;
+                        hydrogenCurrent += tank.Capacity * tank.FilledRatio;
+                    }
                 }
-            }
-            if (oxygenTanks.Count > 0) {
-                foreach (IMyGasTank tank in oxygenTanks) {
-                    oxygenCapacity += tank.Capacity;
-                    oxygenPercent += tank.FilledRatio;
-                    oxygenCurrent += tank.Capacity * tank.FilledRatio;
+                if (oxygenTanks.Count > 0) {
+                    foreach (IMyGasTank tank in oxygenTanks) {
+                        oxygenCapacity += tank.Capacity;
+                        oxygenPercent += tank.FilledRatio;
+                        oxygenCurrent += tank.Capacity * tank.FilledRatio;
+                    }
                 }
-            }
             return new Dictionary<string, double> {
                 { Program.hydrogenCapacity, Math.Round(hydrogenCapacity, 1) },
                 { Program.hydrogenCurrent, Math.Round(hydrogenCurrent, 1) },
@@ -335,65 +348,66 @@ namespace DisplayInfoBase
             Dictionary<String, int> itemMap = new Dictionary<string, int>();
             float cargoVolume = 0;
             float maxVolume = 0;
-            if (cargoContainers.Count > 0) {
-                foreach (IMyCargoContainer container in cargoContainers) {
-                    IMyInventory inventory = container.GetInventory(0);
-                    cargoVolume += inventory.CurrentVolume.RawValue;
-                    maxVolume += inventory.MaxVolume.RawValue;
-                    collectInventoryItems(inventory, itemMap);
-                }
-            }
-            if (assemblers.Count > 0) {
-                foreach (IMyAssembler container in assemblers) {
-                    IMyInventory inventory0 = container.GetInventory(0);
-                    IMyInventory inventory1 = container.GetInventory(1);
-                    cargoVolume += inventory0.CurrentVolume.RawValue;
-                    cargoVolume += inventory1.CurrentVolume.RawValue;
-                    maxVolume += inventory0.MaxVolume.RawValue;
-                    maxVolume += inventory1.MaxVolume.RawValue;
-                    collectInventoryItems(inventory0, itemMap);
-                    collectInventoryItems(inventory1, itemMap);
-                }
-            }
-            if (refinerys.Count > 0) {
-                foreach (IMyRefinery container in refinerys) {
-                    IMyInventory inventory0 = container.GetInventory(0);
-                    IMyInventory inventory1 = container.GetInventory(1);
-                    cargoVolume += inventory0.CurrentVolume.RawValue;
-                    cargoVolume += inventory1.CurrentVolume.RawValue;
-                    maxVolume += inventory0.MaxVolume.RawValue;
-                    maxVolume += inventory1.MaxVolume.RawValue;
-                    collectInventoryItems(inventory0, itemMap);
-                    collectInventoryItems(inventory1, itemMap);
-                }
-            }
-            if (gasGenerators.Count > 0) {
-                foreach (IMyGasGenerator container in gasGenerators) {
-                    IMyInventory inventory = container.GetInventory(0);
-                    cargoVolume += inventory.CurrentVolume.RawValue;
-                    maxVolume += inventory.MaxVolume.RawValue;
-                    collectInventoryItems(inventory, itemMap);
-                }
-            }
-            if (drills.Count > 0) {
-                foreach (IMyShipDrill container in drills) {
-                    IMyInventory inventory = container.GetInventory(0);
-                    cargoVolume += inventory.CurrentVolume.RawValue;
-                    maxVolume += inventory.MaxVolume.RawValue;
-                    collectInventoryItems(inventory, itemMap);
-                }
-            }
-            if (cockpits.Count > 0) {
-                foreach (IMyCockpit container in cockpits) {
-                    if (container.HasInventory) {
+            try {
+                if (cargoContainers.Count > 0) {
+                    foreach (IMyCargoContainer container in cargoContainers) {
                         IMyInventory inventory = container.GetInventory(0);
                         cargoVolume += inventory.CurrentVolume.RawValue;
                         maxVolume += inventory.MaxVolume.RawValue;
                         collectInventoryItems(inventory, itemMap);
                     }
-                    
                 }
-            }
+                if (assemblers.Count > 0) {
+                    foreach (IMyAssembler container in assemblers) {
+                        IMyInventory inventory0 = container.GetInventory(0);
+                        IMyInventory inventory1 = container.GetInventory(1);
+                        cargoVolume += inventory0.CurrentVolume.RawValue;
+                        cargoVolume += inventory1.CurrentVolume.RawValue;
+                        maxVolume += inventory0.MaxVolume.RawValue;
+                        maxVolume += inventory1.MaxVolume.RawValue;
+                        collectInventoryItems(inventory0, itemMap);
+                        collectInventoryItems(inventory1, itemMap);
+                    }
+                }
+                if (refinerys.Count > 0) {
+                    foreach (IMyRefinery container in refinerys) {
+                        IMyInventory inventory0 = container.GetInventory(0);
+                        IMyInventory inventory1 = container.GetInventory(1);
+                        cargoVolume += inventory0.CurrentVolume.RawValue;
+                        cargoVolume += inventory1.CurrentVolume.RawValue;
+                        maxVolume += inventory0.MaxVolume.RawValue;
+                        maxVolume += inventory1.MaxVolume.RawValue;
+                        collectInventoryItems(inventory0, itemMap);
+                        collectInventoryItems(inventory1, itemMap);
+                    }
+                }
+                if (gasGenerators.Count > 0) {
+                    foreach (IMyGasGenerator container in gasGenerators) {
+                        IMyInventory inventory = container.GetInventory(0);
+                        cargoVolume += inventory.CurrentVolume.RawValue;
+                        maxVolume += inventory.MaxVolume.RawValue;
+                        collectInventoryItems(inventory, itemMap);
+                    }
+                }
+                if (drills.Count > 0) {
+                    foreach (IMyShipDrill container in drills) {
+                        IMyInventory inventory = container.GetInventory(0);
+                        cargoVolume += inventory.CurrentVolume.RawValue;
+                        maxVolume += inventory.MaxVolume.RawValue;
+                        collectInventoryItems(inventory, itemMap);
+                    }
+                }
+                if (cockpits.Count > 0) {
+                    foreach (IMyCockpit container in cockpits) {
+                        if (container.HasInventory) {
+                            IMyInventory inventory = container.GetInventory(0);
+                            cargoVolume += inventory.CurrentVolume.RawValue;
+                            maxVolume += inventory.MaxVolume.RawValue;
+                            collectInventoryItems(inventory, itemMap);
+                        }
+                    }
+                }
+            } catch { reInit(); }
             cargoMass = cargoVolume;
             cargoMassMax = maxVolume;
             return itemMap;
@@ -535,7 +549,7 @@ namespace DisplayInfoBase
                 if (end > start) {
                     String payloadRaw = program.CustomData.Substring(start, end - start);
                     if (!payloadRaw.Contains(',')) {
-                        writeOnPBScreen("GeneratorManager\nне верный формат аргументов!\ngeneratormanager(Bat,Ice,H2)");
+                        writeOnPBScreen($"GeneratorManager\nне верный формат аргументов!{pbGeneratorTemplate}");
                         return;
                     }
                     var payloadItems = payloadRaw.Split(',');
@@ -544,7 +558,7 @@ namespace DisplayInfoBase
                         generatorManagerIceMinCount = parseInt(payloadItems[1], generatorManagerIceMinCount);
                         generatorManagerGasPercent = parseDouble(payloadItems[2], generatorManagerGasPercent);
                     } else {
-                        writeOnPBScreen("GeneratorManager\nне достаточно аргументов!\ngeneratormanager(Bat,Ice,H2)");
+                        writeOnPBScreen($"GeneratorManager\nне достаточно аргументов!{pbGeneratorTemplate}");
                         return;
                     }
                 }
@@ -555,7 +569,6 @@ namespace DisplayInfoBase
             string status = enable ? "Активно" : "Простой";
             writeOnPBScreen(
                     $"GeneratorManager: {status}" +
-                    $"\n{getAnimate()}" +
                     "\n\nУсловия для работы:" +
                     $"\nЗарядка батарей <= {generatorManagerBattareyPercent}%" +
                     $"\nи Лёд > {generatorManagerIceMinCount}" +
@@ -585,6 +598,15 @@ namespace DisplayInfoBase
             try { result = int.Parse(value, provider); } 
             catch (Exception e) { writeOnPBScreen(e.Message); }
             return result;
+        }
+
+        void reInit() {
+            if (retryAttempt > 0) {
+                retryAttempt--;
+                initialize();
+            } else {
+                Echo("Инициализация провалена!\nНе осталось RetryAttempt!");
+            }
         }
         /// End of the script
     }
