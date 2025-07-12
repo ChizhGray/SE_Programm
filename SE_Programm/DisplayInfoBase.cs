@@ -43,6 +43,7 @@ namespace DisplayInfoBase
         const string userKeySpacer = "space";
         const string userKeyTextAlign = "-align(";
         const string userKeyFontSize = "-fontsize(";
+        const string userKeyGet = "-get(";
         const string userKeyIgnots = "ignots";
         const string userKeyOres = "ores";
         const string userKeyComponents = "components";
@@ -210,6 +211,7 @@ namespace DisplayInfoBase
                 List<string> tags = customData.Split('\n').Select(t => t.Trim()).ToList();
                 foreach (string tag in tags) {
                     if (tag == userKeySpacer) output.AppendLine("");
+                    else if (tag.Contains(userKeyGet)) output.AppendLine(getItemInfo(allCargo, tag));
                     else if (tag == userKeyIgnots && ingots != "") output.AppendLine($"-= Слитки =-{ingots}");
                     else if (tag == userKeyOres && ore != "") output.AppendLine($"-= Руда =-{ore}");
                     else if (tag == userKeyComponents && components != "") output.AppendLine($"-= Компоненты =-{components}");
@@ -222,7 +224,7 @@ namespace DisplayInfoBase
                     else if (tag == userKeyTurbines) output.AppendLine(turbinesInfoString);
                     else if (tag == userKeyGenerators) output.AppendLine(generatorInfoString);
                     else if (tag == userKeyVolumeCargo) output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
-                    else if (tag == userKeyMassShip)  output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
+                    else if (tag == userKeyMassShip) output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
                     else if (tag == userKeyMassCargo) output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
                     else if (tag == userKeyHydrogen) output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
                     else if (tag == userKeyOxygen) output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
@@ -337,7 +339,26 @@ namespace DisplayInfoBase
                 }
             }
         }
-        
+
+        string getItemInfo(Dictionary<String, int> itemMap, string tag) {
+            var count = 0;
+            var title = "initial";
+            int argumentStart = tag.IndexOf(userKeyGet);
+            if (argumentStart >= 0) {
+                int start = argumentStart + userKeyGet.Length;
+                int end = tag.IndexOf(")", start);
+                if (end > start) {
+                    try {
+                        string value = tag.Substring(start, end - start);
+                        var item = dictionary.First(i => i.Key.ToLower().Contains(value));
+                        count = getItemCount(itemMap, item.Key);
+                        title = item.Value;
+                    } catch (Exception e) { return e.Message; }
+                }
+            }
+            return $"{title}: {count}";   
+        }
+
         Dictionary<String, Double> getGasInfo() {
             float hydrogenCapacity = 0;
             Double hydrogenCurrent = 0;
