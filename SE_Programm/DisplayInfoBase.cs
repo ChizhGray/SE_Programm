@@ -104,7 +104,7 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Component/PowerCell", "Энергоячейка"},
             {"MyObjectBuilder_Component/Medical", "Медицинский компонент"},
             //
-            {"MyObjectBuilder_AmmoMagazine/RapidFireAutomaticRifleGun_Mag_50rd", "магазин винтовки MR-50A"},
+            {"MyObjectBuilder_AmmoMagazine/RapidFireAutomaticRifleGun_Mag_50rd", "Магазин винтовки MR-50A"},
             {"MyObjectBuilder_OxygenContainerObject/OxygenBottle", "Кислородный баллон"},
             {"MyObjectBuilder_PhysicalGunObject/RapidFireAutomaticRifleItem", "Винтовка MR-50A"},
             {"MyObjectBuilder_PhysicalObject/SpaceCredit", "Космо-кредиты"},
@@ -192,31 +192,21 @@ namespace DisplayInfoBase
                     else if (tag == "ores" && ore != "") output.AppendLine($"-= Руда =-{ore}");
                     else if (tag == "components" && components != "") output.AppendLine($"-= Компоненты =-{components}");
                     //
-                    else if (tag == "physicals" && physycal != "") output.AppendLine(physycal);
-                    else if (tag == "ammos" && ammo != "") output.AppendLine(ammo);
-                    else if (tag == "guns" && guns != "") output.AppendLine(guns);
-                    else if (tag == "oxygenbottle" && oxygenBottle != "") output.AppendLine(oxygenBottle);
+                    else if (tag == "physicals" && physycal != "") output.Append(physycal);
+                    else if (tag == "ammos" && ammo != "") output.Append(ammo);
+                    else if (tag == "guns" && guns != "") output.Append(guns);
+                    else if (tag == "oxygenbottle" && oxygenBottle != "") output.Append(oxygenBottle);
                     //
-                    else if (tag == "unknown" && unknown != "")
-                        output.AppendLine($"-=  Не распознано =-{unknown}");
-                    else if (tag == "batteries")
-                        output.AppendLine(batteriesInfo.Key);
-                    else if (tag == "turbines")
-                        output.AppendLine(turbinesInfoString);
-                    else if (tag == "generators")
-                        output.AppendLine(generatorInfoString);
-                    else if (tag == "volumecargo")
-                        output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
-                    else if (tag == "massship")
-                        output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
-                    else if (tag == "masscargo")
-                        output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
-                    else if (tag == "hydrogen")
-                        output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
-                    else if (tag == "oxygen")
-                        output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
-                    else if (tag == "connectors")
-                        output.AppendLine(connectorsInfoString);
+                    else if (tag == "unknown" && unknown != "") output.Append(unknown);
+                    else if (tag == "batteries") output.AppendLine(batteriesInfo.Key);
+                    else if (tag == "turbines") output.AppendLine(turbinesInfoString);
+                    else if (tag == "generators") output.AppendLine(generatorInfoString);
+                    else if (tag == "volumecargo") output.AppendLine($"Объём груза: {cargoMass:#,##0}/{cargoMassMax:#,##0}m3");
+                    else if (tag == "massship")  output.AppendLine($"Масса корабля: {shipMassBase:#,##0}кг");
+                    else if (tag == "masscargo") output.AppendLine($"Масса груза: {shipCargoMass:#,##0}кг");
+                    else if (tag == "hydrogen") output.AppendLine($"Водород: {hydrogenPercentValue}% ({hydrogenCurrentValue:#,##0}/{hydrogenCapacityValue:#,##0})");
+                    else if (tag == "oxygen") output.AppendLine($"Кислород: {oxygenPercentValue}% ({oxygenCurrentValue:#,##0}/{oxygenCapacityValue:#,##0})");
+                    else if (tag == "connectors") output.AppendLine(connectorsInfoString);
                 }
 
                 if (output.Length > 0) {
@@ -472,8 +462,7 @@ namespace DisplayInfoBase
                 String name = tryTranslate(key);
                 sb.Append($"\n{name}: {source[key]}");
             }
-            var result = sb.ToString() != "" ? sb.ToString(): " - Нет в наличии";
-            return result;
+            return sb.ToString();
         }
 
         String GetUnknownItems(Dictionary<String, int> source, List<String> knownTypes) {
@@ -486,8 +475,7 @@ namespace DisplayInfoBase
                 String name = tryTranslate(key);
                 sb.Append($"\n{name}: {source[key]}");
             }
-            var result = sb.ToString() != "" ? sb.ToString() : " - Нет в наличии";
-            return result;
+            return sb.ToString();
         }
 
         int getItemCount(Dictionary<String, int> itemMap, String type) {
