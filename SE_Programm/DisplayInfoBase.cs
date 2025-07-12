@@ -33,6 +33,11 @@ namespace DisplayInfoBase
         const string ingotType = "MyObjectBuilder_Ingot/";
         const string componentType = "MyObjectBuilder_Component/";
         const string oreType = "MyObjectBuilder_Ore/";
+        const string physycalType = "MyObjectBuilder_PhysicalObject/";
+        const string gunType = "MyObjectBuilder_PhysicalGunObject/";
+        const string ammoType = "MyObjectBuilder_AmmoMagazine/";
+        const string oxygenType = "MyObjectBuilder_OxygenContainerObject/";
+        //
         const string unknownType = "Unknown";
 
         const string generatorManagerKeyWord = "generatormanager(";
@@ -41,22 +46,16 @@ namespace DisplayInfoBase
 
         const string pbGeneratorTemplate = "\ngeneratorManager(Bat,Ice,H2)";
         const string textPannelsComands = "Введите доступные значения: " +
-                        "\n\nignots" +
-                        "\nores" +
-                        "\ncomponents" +
-                        "\nunknown" +
-                        "\n\nbatteries" +
-                        "\nturbines" +
-                        "\ngenerators" +
-                        "\nvolumeCargo" +
-                        "\nmassShip" +
-                        "\nmassCargo" +
-                        "\nhydrogen" +
-                        "\noxygen" +
-                        "\nconnectors" +
-                        "\n\nspace" +
-                        "\n-fontsize(1.0)" +
-                        "\n-align(l/c/r)";
+                        "\n\n-= Инвентарь =-" +
+                        "\nignots | ores | components" +
+                        "\nphysicals | ammos | guns" +
+                        "\noxygenbottle | nunknown" +
+                        "\n\n-= Блоки =-" +
+                        "\nbatteries | turbines | generators" +
+                        "\nvolumeCargo | massShip | massCargo" +
+                        "\nhydrogen | oxygen | connectors" +
+                        "\n\n-= Форматирование =-" +
+                        "\nspace | -fontsize(1.0) | -align(l/c/r)";
 
         const string hydrogenCapacity = "hydrogenCapacity";
         const string hydrogenCurrent = "hydrogenCurrent";
@@ -104,6 +103,11 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Component/Girder", "Балка"},
             {"MyObjectBuilder_Component/PowerCell", "Энергоячейка"},
             {"MyObjectBuilder_Component/Medical", "Медицинский компонент"},
+            //
+            {"MyObjectBuilder_AmmoMagazine/RapidFireAutomaticRifleGun_Mag_50rd", "магазин винтовки MR-50A"},
+            {"MyObjectBuilder_OxygenContainerObject/OxygenBottle", "Кислородный баллон"},
+            {"MyObjectBuilder_PhysicalGunObject/RapidFireAutomaticRifleItem", "Винтовка MR-50A"},
+            {"MyObjectBuilder_PhysicalObject/SpaceCredit", "Космо-кредиты"},
         };
 
         List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
@@ -147,6 +151,12 @@ namespace DisplayInfoBase
             String ingots = stringItemMap[ingotType];
             String components = stringItemMap[componentType];
             String ore = stringItemMap[oreType];
+            //
+            string physycal = stringItemMap[physycalType];
+            string guns = stringItemMap[gunType];
+            string ammo = stringItemMap[ammoType];
+            string oxygenBottle = stringItemMap[oxygenType];
+            //
             String unknown = stringItemMap[unknownType];
             double hydrogenPercentValue = gasInfo[hydrogenPercent];
             double hydrogenCurrentValue = gasInfo[hydrogenCurrent];
@@ -177,14 +187,16 @@ namespace DisplayInfoBase
                 StringBuilder output = new StringBuilder();
                 List<string> tags = customData.Split('\n').Select(t => t.Trim()).ToList();
                 foreach (string tag in tags) {
-                    if (tag == "space")
-                        output.AppendLine("");
-                    else if (tag == "ignots" && ingots != "")
-                        output.AppendLine($"-= Слитки =-{ingots}");
-                    else if (tag == "ores" && ore != "")
-                        output.AppendLine($"-= Руда =-{ore}");
-                    else if (tag == "components" && components != "")
-                        output.AppendLine($"-= Компоненты =-{components}");
+                    if (tag == "space") output.AppendLine("");
+                    else if (tag == "ignots" && ingots != "") output.AppendLine($"-= Слитки =-{ingots}");
+                    else if (tag == "ores" && ore != "") output.AppendLine($"-= Руда =-{ore}");
+                    else if (tag == "components" && components != "") output.AppendLine($"-= Компоненты =-{components}");
+                    //
+                    else if (tag == "physicals" && physycal != "") output.AppendLine(physycal);
+                    else if (tag == "ammos" && ammo != "") output.AppendLine(ammo);
+                    else if (tag == "guns" && guns != "") output.AppendLine(guns);
+                    else if (tag == "oxygenbottle" && oxygenBottle != "") output.AppendLine(oxygenBottle);
+                    //
                     else if (tag == "unknown" && unknown != "")
                         output.AppendLine($"-=  Не распознано =-{unknown}");
                     else if (tag == "batteries")
@@ -435,7 +447,20 @@ namespace DisplayInfoBase
             result[ingotType] = GetFormattedItems(itemMap, ingotType);
             result[componentType] = GetFormattedItems(itemMap, componentType);
             result[oreType] = GetFormattedItems(itemMap, oreType);
-            result[unknownType] = GetUnknownItems(itemMap, new List<String> { ingotType, componentType, oreType });
+            //
+            result[physycalType] = GetFormattedItems(itemMap, physycalType);
+            result[ammoType] = GetFormattedItems(itemMap, ammoType);
+            result[gunType] = GetFormattedItems(itemMap, gunType);
+            result[oxygenType] = GetFormattedItems(itemMap, oxygenType);
+            //
+            result[unknownType] = GetUnknownItems(
+                itemMap, 
+                new List<String> { 
+                    ingotType, componentType, oreType, 
+                    physycalType, ammoType, gunType, 
+                    oxygenType 
+                }
+            );
             return result;
         }
 
