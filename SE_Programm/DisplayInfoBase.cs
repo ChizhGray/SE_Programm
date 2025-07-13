@@ -125,10 +125,17 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Component/Girder", "Балка"},
             {"MyObjectBuilder_Component/PowerCell", "Энергоячейка"},
             {"MyObjectBuilder_Component/Medical", "Медицинский компонент"},
+            {"MyObjectBuilder_Component/Explosives", "Взрывчатка"},
+            {"MyObjectBuilder_Component/Superconductor", "Сверхпроводник"},
             //
             {"MyObjectBuilder_AmmoMagazine/RapidFireAutomaticRifleGun_Mag_50rd", "Магазин винтовки MR-50A"},
+
             {"MyObjectBuilder_OxygenContainerObject/OxygenBottle", "Кислородный баллон"},
+
             {"MyObjectBuilder_PhysicalGunObject/RapidFireAutomaticRifleItem", "Винтовка MR-50A"},
+            {"MyObjectBuilder_PhysicalGunObject/ElitePistolItem", "Пистолет S-10E"},
+            {"MyObjectBuilder_PhysicalGunObject/FlareGunItem", "Ракетница"},
+
             {"MyObjectBuilder_PhysicalObject/SpaceCredit", "Космо-кредиты"},
         };
 
@@ -547,7 +554,8 @@ namespace DisplayInfoBase
             } 
             string status = isCharging ? "заряжаются" : isDischarging ? "разряжаются" : "в режиме ожидания";
             double percent = Math.Round(stored / max * 100, 1);
-            return new KeyValuePair<String, double>($"Батареи ({batteries.Count}) {status}: {percent}%", percent);
+            string result = GetProgressBar($"Батареи {status}", stored, max);
+            return new KeyValuePair<String, double>(result, percent);
         }
 
         String getTurbinesInfo() {
