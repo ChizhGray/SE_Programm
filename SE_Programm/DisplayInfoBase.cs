@@ -40,7 +40,7 @@ namespace DisplayInfoBase
         const string oxygenType = "MyObjectBuilder_OxygenContainerObject/";
         const string unknownType = "Unknown";
         const string userKeyGeneratorManager = "generatormanager(";
-        const string userKeySpacer = "space";
+        const string userKeySpacer = "-spacer";
         const string userKeyTextAlign = "-align(";
         const string userKeyFontSize = "-fontsize(";
         const string userKeyGet = "-get(";
@@ -74,8 +74,10 @@ namespace DisplayInfoBase
                         $"\n{userKeyVolumeCargo} | {userKeyMassShip} | {userKeyMassCargo}" +
                         $"\n{userKeyHydrogen} | {userKeyOxygen} | {userKeyConnectors}" +
                         $"\n{userKeyReactors}" +
-                        "\n\n-= Форматирование =-" +
-                        $"\n{userKeySpacer} | {userKeyFontSize}1.0) | {userKeyTextAlign}l/c/r)";
+                        "\n\n-= Форматирование текста =-" +
+                        $"\n{userKeySpacer} | {userKeyFontSize}1.0) | {userKeyTextAlign}l|c|r)" +
+                        "\n\n-= Другое =-" +
+                        $"\n{userKeyGet}Ingot/Gold)";
 
         const string hydrogenCapacity = "hydrogenCapacity";
         const string hydrogenCurrent = "hydrogenCurrent";
