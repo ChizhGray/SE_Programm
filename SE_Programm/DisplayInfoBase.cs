@@ -1,4 +1,6 @@
-﻿using Sandbox.Game;
+﻿using Sandbox.Definitions;
+using Sandbox.Game;
+using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.Gui;
@@ -18,6 +20,7 @@ using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Library.Collections;
 using VRage.ModAPI;
+using VRage.ObjectBuilders;
 using VRageMath;
 using static VRage.Game.MyObjectBuilder_SessionComponentMission;
 //using Sandbox.ModAPI;
@@ -62,6 +65,8 @@ namespace DisplayInfoBase
         const string userKeyOxygen = "oxygen";
         const string userKeyConnectors = "connectors";
         const string userKeyReactors = "reactors";
+        const string userKeyJumpDrives = "jumpdrives";
+        const string userKeyBrokenBlocks = "brokenblocks";
 
 
         string textPannelsComands = "Введите доступные значения: " +
@@ -73,7 +78,7 @@ namespace DisplayInfoBase
                         $"\n{userKeyBatteries} | {userKeyTurbines} | {userKeyGenerators}" +
                         $"\n{userKeyVolumeCargo} | {userKeyMassShip} | {userKeyMassCargo}" +
                         $"\n{userKeyHydrogen} | {userKeyOxygen} | {userKeyConnectors}" +
-                        $"\n{userKeyReactors}" +
+                        $"\n{userKeyReactors} | {userKeyJumpDrives} | {userKeyBrokenBlocks}" +
                         "\n\n-= Форматирование текста =-" +
                         $"\n{userKeySpacer} | {userKeyFontSize}1.0) | {userKeyTextAlign}l|c|r)" +
                         "\n\n-= Другое =-" +
@@ -143,6 +148,8 @@ namespace DisplayInfoBase
 
         List<IMyTextPanel> textPanels = new List<IMyTextPanel>();
 
+        List<IMyTerminalBlock> allBlocks = new List<IMyTerminalBlock>();
+
         List<IMyCargoContainer> cargoContainers = new List<IMyCargoContainer>();
         List<IMyAssembler> assemblers = new List<IMyAssembler>();
         List<IMyRefinery> refinerys = new List<IMyRefinery>();
@@ -156,7 +163,7 @@ namespace DisplayInfoBase
         List<IMyGasTank> hydrogenTanks = new List<IMyGasTank>();
         List<IMyGasTank> oxygenTanks = new List<IMyGasTank>();
         List<IMyShipConnector> connectors = new List<IMyShipConnector>();
-
+        List<IMyJumpDrive> jumpDrives = new List<IMyJumpDrive>();
         List<IMyReactor> reactors = new List<IMyReactor>();
 
         List<IMyShipController> controllers = new List<IMyShipController>();
@@ -199,6 +206,8 @@ namespace DisplayInfoBase
             String turbinesInfoString = getTurbinesInfo();
             String connectorsInfoString = getConnectorInfo();
             String reactorsInfoString = getReactorsInfo();
+            String jumpDrivesInfoString = getJumpDrivesInfo();
+            String brokenBlocksInfoString = getBrokenBlocks();
             var shipMassPair = getShipBaseTotalMass();
             float shipMassBase = shipMassPair.Key;
             float shipCargoMass = shipMassPair.Value - shipMassBase;
@@ -239,6 +248,8 @@ namespace DisplayInfoBase
                     else if (tag == userKeyOxygen) output.AppendLine(GetProgressBar("Кислород", oxygenCurrentValue, oxygenCapacityValue));
                     else if (tag == userKeyConnectors) output.AppendLine(connectorsInfoString);
                     else if (tag == userKeyReactors) output.AppendLine(reactorsInfoString);
+                    else if (tag == userKeyJumpDrives) output.AppendLine(jumpDrivesInfoString);
+                    else if (tag == userKeyBrokenBlocks) output.AppendLine(brokenBlocksInfoString);
                 }
                 if (output.Length > 0) {
                     myTextPanel.WriteText(output.ToString());
@@ -268,6 +279,8 @@ namespace DisplayInfoBase
             GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(connectors, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyShipController>(controllers, i => i.CubeGrid == currentGrid);
             GridTerminalSystem.GetBlocksOfType<IMyReactor>(reactors, i => i.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyJumpDrive>(jumpDrives, i => i.CubeGrid == currentGrid);
+            GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(allBlocks, i => i.CubeGrid == currentGrid);
             applyProgrammBlockSettings();
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
@@ -634,6 +647,55 @@ namespace DisplayInfoBase
                 } else {
                     sb.Append($"\nРеакторы простаивают");
                 }  
+            }
+            return sb.ToString();
+        }
+
+        string getJumpDrivesInfo() {
+            if (jumpDrives.Count == 0) { return "Прыжковых двигателей не найдено!"; } 
+            StringBuilder sb = new StringBuilder();
+            foreach (var drive in jumpDrives) {
+                if (drive.IsFunctional) 
+                    sb.AppendLine(
+                        $"{GetProgressBar(drive.CustomName, drive.CurrentStoredPower, drive.MaxStoredPower)}"
+                    );
+            }
+            return sb.ToString();
+        }
+
+        string getBrokenBlocks() {
+            var brokenBlocks = new List<IMyTerminalBlock>();
+            var unfinishedBlocks = new List<IMyTerminalBlock>();
+            foreach (var block in allBlocks) {
+                var cubeBlock = block as IMyCubeBlock;
+                if (cubeBlock == null) continue;
+                if (!block.IsFunctional && !block.IsWorking) {
+                    if (block.IsBeingHacked || block.DisassembleRatio > 0) {
+                        unfinishedBlocks.Add(block);
+                    } else {
+                        brokenBlocks.Add(block);
+                    }
+                }
+                else if (!block.IsFunctional && block.IsWorking) {
+                    brokenBlocks.Add(block);
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            if (unfinishedBlocks.Count > 0) {
+                sb.AppendLine("-= Недостроенные блоки =-");
+                foreach (var block in unfinishedBlocks) {
+                    sb.AppendLine($"{block.DisplayNameText}");
+                }
+            }
+            if (brokenBlocks.Count > 0) {
+                if (unfinishedBlocks.Count > 0) sb.AppendLine();
+                sb.AppendLine("-= Поврежденные блоки =-");
+                foreach (var block in brokenBlocks) {
+                    sb.AppendLine(block.DisplayNameText);
+                }
+            }
+            if (brokenBlocks.Count == 0 && unfinishedBlocks.Count == 0) {
+                sb.AppendLine("Все блоки в порядке!");
             }
             return sb.ToString();
         }
