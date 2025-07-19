@@ -134,6 +134,8 @@ namespace DisplayInfoBase
             {"MyObjectBuilder_Component/Medical", "Медицинский компонент"},
             {"MyObjectBuilder_Component/Explosives", "Взрывчатка"},
             {"MyObjectBuilder_Component/Superconductor", "Сверхпроводник"},
+            {"MyObjectBuilder_Component/Thrust", "Детали ионного ускорителя"},
+            {"MyObjectBuilder_Component/ZoneChip", "Ключ безопасности"},
             //
             {"MyObjectBuilder_AmmoMagazine/RapidFireAutomaticRifleGun_Mag_50rd", "Магазин винтовки MR-50A"},
 
